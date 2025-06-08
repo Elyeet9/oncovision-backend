@@ -24,8 +24,8 @@ class ClinicalCaseInline(admin.TabularInline):
 
 
 class CustomPatientAdmin(admin.ModelAdmin):
-    list_display = ("id_number", "id_type", "names", "last_names", "birth_date", "created_at", "updated_at")
-    search_fields = ("names", "last_names", "id_number")
+    list_display = ("id_number", "id_type", "names", "last_names", "clinical_history", "birth_date", "created_at", "updated_at")
+    search_fields = ("names", "last_names", "id_number", "clinical_history")
     list_filter = ("id_type", "birth_date")
     ordering = ("-created_at", "-updated_at")
     inlines = (ClinicalCaseInline,)
