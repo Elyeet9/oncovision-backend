@@ -20,7 +20,7 @@ class ClinicalCaseListView(APIView):
         try:
             for case in clinical_cases:
                 # Ensure patient_id is set to an empty string if patient is None
-                patient_id = case.patient.id if case.patient else ""
+                patient_id = case.patient.id_number if case.patient else "-"
 
                 # Get counts of medical images and nodules for the case
                 medical_images_count = 0
@@ -36,7 +36,7 @@ class ClinicalCaseListView(APIView):
 
                 response_data.append({
                     'id': case.id,
-                    'patient_id': case.patient.id,
+                    'patient_id': patient_id,
                     'medical_images_count': medical_images_count,
                     'nodules_count': lung_nodules_count,
                     'created_at': case.created_at,
