@@ -4,7 +4,8 @@ from rest_framework import status
 
 from cases.models.clinical_case import ClinicalCase
 from cases.models.medical_imaging import MedicalImaging
-from cases.models.lung_nodule import LungNodule 
+from cases.models.lung_nodule import LungNodule
+from patients.models.patient import Patient 
 
 
 class ClinicalCaseListView(APIView):
@@ -16,6 +17,17 @@ class ClinicalCaseListView(APIView):
     def get(self, request, *args, **kwargs):
         clinical_cases = ClinicalCase.objects.all()
         response_data = []
+
+        # Check for case_id or patient_id in query parameters
+        case_id = request.query_params.get('case_id', None)
+        patient_id = request.query_params.get('patient_id', None)
+
+        if case_id:
+            # Filter by case_id if provided
+            clinical_cases = clinical_cases.filter(id=case_id)
+        if patient_id:
+            # Check for any cases with ids similar to the provided patient_id
+            clinical_cases = clinical_cases.filter(patient__id_number=patient_id)
 
         try:
             for case in clinical_cases:
@@ -48,5 +60,50 @@ class ClinicalCaseListView(APIView):
         except Exception as e:
             return Response(
                 {'error': str(e)}, 
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+            )
+        
+
+class ClinicalCaseCreateView(APIView):
+    """
+    API view to create a new clinical case.
+    """
+
+    def post(self, request, *args, **kwargs):
+        # This method should handle the creation of a clinical case
+        data = request.data
+
+        # Get patient_id
+        patient_id = data.get('patient_id', None)
+        print("patient_id", patient_id)
+        patient = None
+        if patient_id:
+            patient = Patient.objects.filter(
+                id_number=patient_id
+            ).first()
+            if not Patient.objects.filter(id_number=patient_id).exists():
+                return Response(
+                    {"error": "Patient with the provided ID does not exist."},
+                    status=status.HTTP_400_BAD_REQUEST
+                )
+        
+        try:
+            # Create the clinical case
+            clinical_case = ClinicalCase.objects.create(
+                description='New clinical case created via API',
+            )
+            if patient:
+                clinical_case.patient = patient
+                clinical_case.save()
+            return Response(
+                {"message": "Clinical case created successfully", "clinical_case_id": clinical_case.id},
+                status=status.HTTP_201_CREATED
+            )
+        except Exception as e:
+            print(e)
+            if clinical_case:
+                clinical_case.delete()
+            return Response(
+                {"error": str(e)},
                 status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
