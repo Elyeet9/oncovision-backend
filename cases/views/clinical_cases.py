@@ -22,12 +22,13 @@ class ClinicalCaseListView(APIView):
         case_id = request.query_params.get('case_id', None)
         patient_id = request.query_params.get('patient_id', None)
 
-        if case_id:
-            # Filter by case_id if provided
-            clinical_cases = clinical_cases.filter(id=case_id)
-        if patient_id:
-            # Check for any cases with ids similar to the provided patient_id
-            clinical_cases = clinical_cases.filter(patient__id_number=patient_id)
+        if clinical_cases:
+            if case_id:
+                # Filter by case_id if provided
+                clinical_cases = clinical_cases.filter(id=case_id)
+            if patient_id:
+                # Check for any cases with ids similar to the provided patient_id
+                clinical_cases = clinical_cases.filter(patient__id_number=patient_id)
 
         try:
             for case in clinical_cases:

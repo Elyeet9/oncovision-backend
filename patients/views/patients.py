@@ -14,27 +14,28 @@ class PatientListView(APIView):
         patients = Patient.objects.all()
         response_data = []
 
-        # Check for name, id_number or clinical_history in query parameters
-        name = request.query_params.get('name', None)
-        last_name = request.query_params.get('last_name', None)
-        id_number = request.query_params.get('id_number', None)
-        clinical_history = request.query_params.get('clinical_history', None)
+        if patients:
+            # Check for name, id_number or clinical_history in query parameters
+            name = request.query_params.get('name', None)
+            last_name = request.query_params.get('last_name', None)
+            id_number = request.query_params.get('id_number', None)
+            clinical_history = request.query_params.get('clinical_history', None)
 
-        if name:
-            # Filter by name if provided
-            patients = patients.filter(names__icontains=name)
-            
-        if last_name:
-            # Filter by last_name if provided
-            patients = patients.filter(last_names__icontains=last_name)
+            if name:
+                # Filter by name if provided
+                patients = patients.filter(names__icontains=name)
+                
+            if last_name:
+                # Filter by last_name if provided
+                patients = patients.filter(last_names__icontains=last_name)
 
-        if id_number:
-            # Filter by id_number if provided
-            patients = patients.filter(id_number__icontains=id_number)
+            if id_number:
+                # Filter by id_number if provided
+                patients = patients.filter(id_number__icontains=id_number)
 
-        if clinical_history:
-            # Filter by clinical_history if provided
-            patients = patients.filter(clinical_history__icontains=clinical_history)
+            if clinical_history:
+                # Filter by clinical_history if provided
+                patients = patients.filter(clinical_history__icontains=clinical_history)
 
         try:
             for patient in patients:
