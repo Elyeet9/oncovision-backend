@@ -86,4 +86,55 @@ class MedicalImagingViewSet(APIView):
             {"message": "Medical images updated successfully."},
             status=status.HTTP_200_OK
         )
+    
+    def delete(self, request, *args, **kwargs):
+        """
+        Delete multiple medical imaging records.
+        """
+        # Get the image IDs from the response body
+        image_ids = request.data.get('image_ids', [])
+        if not image_ids:
+            return Response(
+                {"error": "image_ids is required."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+        # Delete the medical images
+        medical_images = MedicalImaging.objects.filter(id__in=image_ids)
+        if not medical_images.exists():
+            return Response(
+                {"error": "No medical images found with the provided IDs."},
+                status=status.HTTP_404_NOT_FOUND
+            )
+
+        for image in medical_images:
+            image.delete()
+
+        return Response(
+            {"message": "Medical images deleted successfully."},
+            status=status.HTTP_204_NO_CONTENT
+        )
         
+
+class MedicalImagingID(APIView):
+    """
+    API view to handle operations on a specific medical imaging record by ID.
+    """
+
+    def delete(self, request, *args, **kwargs):
+        """
+        Delete a medical imaging record by ID.
+        """
+        try:
+            pk = kwargs['pk']
+            medical_image = MedicalImaging.objects.get(id=pk)
+            medical_image.delete()
+            return Response(
+                {"message": "Medical imaging record deleted successfully."},
+                status=status.HTTP_204_NO_CONTENT
+            )
+        except MedicalImaging.DoesNotExist:
+            return Response(
+                {"error": "Medical imaging record not found."},
+                status=status.HTTP_404_NOT_FOUND
+            )
