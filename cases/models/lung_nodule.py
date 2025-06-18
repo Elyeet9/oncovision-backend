@@ -20,6 +20,7 @@ class LungNodule(BaseModel):
         related_name="lung_nodules",
         verbose_name="Caso clínico"
     )
+    confidence = models.FloatField(blank=True, null=True, verbose_name="Nivel de confianza")
 
     class Meta:
         verbose_name = "Nódulo pulmonar"

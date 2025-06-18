@@ -131,6 +131,7 @@ class ClinicalCaseViewSet(APIView):
             }
             # Get medical images associated with the clinical case
             medical_images = MedicalImaging.objects.filter(clinical_case=clinical_case)
+            medical_images_data = []
             for medical_image in medical_images:
                 # Check for lung nodules if they exists
                 lung_nodules = LungNodule.objects.filter(medical_imaging=medical_image)
@@ -139,23 +140,23 @@ class ClinicalCaseViewSet(APIView):
                     nodule_data.append({
                         'id': lung_nodule.id,
                         'medical_imaging_id': lung_nodule.medical_imaging.id,
-                        'malignancy_type': lung_nodule.malignancy_type,
+                        'malignancy_type': lung_nodule.get_malignancy_type_display(),
                         'x_position': lung_nodule.x_position,
                         'y_position': lung_nodule.y_position,
                         'width': lung_nodule.width,
                         'height': lung_nodule.height,
+                        'confidence': lung_nodule.confidence,
                     })
+                medical_images_data.append({
+                    'id': medical_image.id,
+                    'state': medical_image.state,
+                    'full_image': medical_image.full_image.url if medical_image.full_image else None,
+                    'processed_image': medical_image.processed_image.url if medical_image.processed_image else None,
+                    'lung_nodules': nodule_data
+                })
                 
                 # Add the medical image data to the response
-            response_data['medical_images'] = (
-                {
-                    'id': img.id,
-                    'state': img.state,
-                    'full_image': img.full_image.url if img.full_image else None,
-                    'processed_image': img.processed_image.url if img.processed_image else None,
-                    'lung_nodules': nodule_data
-                } for img in medical_images
-            )
+            response_data['medical_images'] = medical_images_data
 
             return Response(response_data, status=status.HTTP_200_OK)
         # Handle case where clinical case does not exist

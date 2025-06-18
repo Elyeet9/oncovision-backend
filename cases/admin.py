@@ -34,8 +34,8 @@ class LungNoduleInline(admin.TabularInline):
     model = LungNodule
     extra = 0
 
-    readonly_fields = ('malignancy_type', 'x_position', 'y_position', 'width', 'height', 'created_at', 'updated_at')
-    fields = ('malignancy_type', 'x_position', 'y_position', 'width', 'height', 'created_at', 'updated_at')
+    readonly_fields = ('malignancy_type', 'x_position', 'y_position', 'width', 'height', 'confidence', 'created_at', 'updated_at')
+    fields = ('malignancy_type', 'x_position', 'y_position', 'width', 'height', 'confidence', 'created_at', 'updated_at')
 
 
 class CustomMedicalImagingAdmin(admin.ModelAdmin):
@@ -47,7 +47,7 @@ class CustomMedicalImagingAdmin(admin.ModelAdmin):
 
 
 class CustomLungNoduleAdmin(admin.ModelAdmin):
-    list_display = ("id", "medical_imaging__clinical_case", "medical_imaging", "malignancy_type", "x_position", "y_position", "width", "height", "created_at", "updated_at")
+    list_display = ("id", "medical_imaging__clinical_case", "medical_imaging", "malignancy_type", "x_position", "y_position", "width", "height", 'confidence', "created_at", "updated_at")
     search_fields = ("id", "medical_imaging__id", "medical_imaging__clinical_case__patient__names", "medical_imaging__clinical_case__patient__last_names")
     list_filter = ("malignancy_type", "created_at", "updated_at")
     ordering = ("-created_at", "-updated_at")

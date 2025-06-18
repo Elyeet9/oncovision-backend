@@ -133,6 +133,7 @@ class MedicalImagingViewSet(APIView):
                     x_position = prediction['x'] / PROCESSED_IMAGE_WIDTH
                     y_position = prediction['y'] / PROCESSED_IMAGE_HEIGHT
                     malignancy_type = prediction['class']
+                    confidence = prediction['confidence']
                     # Create a new lung nodule record
                     LungNodule.objects.create(
                         malignancy_type=malignancy_type,
@@ -140,7 +141,8 @@ class MedicalImagingViewSet(APIView):
                         y_position=y_position,
                         width=width,
                         height=height,
-                        medical_imaging=image
+                        medical_imaging=image,
+                        confidence=confidence
                     )
 
                 # Set to analyzed state
