@@ -19,6 +19,7 @@ class Patient(BaseModel):
         verbose_name = "Paciente"
         verbose_name_plural = "Pacientes"
         ordering = ["-created_at", "-updated_at"]
+        unique_together = (("id_number", "id_type"),)
 
     def __str__(self):
         return f"{self.names} {self.last_names} ({self.id_number})" if self.id_number else f"{self.names} {self.last_names}"

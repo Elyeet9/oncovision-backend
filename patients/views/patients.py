@@ -112,3 +112,29 @@ class PatientCreateView(APIView):
                 {"error": str(e)},
                 status=status.HTTP_400_BAD_REQUEST
             )
+        
+class PatientViewSet(APIView):
+    """
+    API view to retrieve, update, or delete a patient by ID.
+    """
+    def get(self, request, *args, **kwargs):
+        try:
+            patient_id = kwargs['pk']
+            print(patient_id)
+            patient = Patient.objects.get(id_number=patient_id)
+            full_name = f'{patient.last_names}, {patient.names}'
+            id_number = patient.id_number if patient.id_number else "-"
+            clinical_history = patient.clinical_history if patient.clinical_history else "-"
+            response_data = {
+                'full_name': full_name,
+                'id_number': id_number,
+                'clinical_history': clinical_history,
+                'created_at': patient.created_at,
+                'updated_at': patient.updated_at
+            }
+            return Response(response_data, status=status.HTTP_200_OK)
+        except Patient.DoesNotExist:
+            return Response(
+                {"error": "Patient not found."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
