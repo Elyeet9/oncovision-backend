@@ -3,12 +3,17 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.core.files import File
 
-import io
-import cv2
 from cupy.cuda import is_available as is_cuda_available
+from inference_sdk import InferenceHTTPClient
+from dotenv import load_dotenv
+import cv2
+import io
+import os
 
 from cases.models.medical_imaging import MedicalImaging
+from cases.models.lung_nodule import LungNodule
 from oncovision.utils.image_filters import adaptiveBilateralFilter, cudaAdaptiveBilateralFilter
+from oncovision.settings import PROCESSED_IMAGE_WIDTH, PROCESSED_IMAGE_HEIGHT
 
 
 class MedicalImagingViewSet(APIView):
@@ -79,8 +84,69 @@ class MedicalImagingViewSet(APIView):
                         {"error": f"Failed to read image {image_name}."},
                         status=status.HTTP_400_BAD_REQUEST
                     )
-            image.state = new_state
-            image.save()
+                image.state = new_state
+                image.save()
+            elif image.state in ('ready' or 'error') and new_state == 'processing':
+                # Set to processing state
+                image.state = new_state
+                image.save()
+
+                # Get the api key
+                load_dotenv()
+                roboflow_api_key = os.getenv("ROBOFLOW_API_KEY")
+
+                # Initialize the inference client
+                inference_client = InferenceHTTPClient(
+                    api_url="https://serverless.roboflow.com",
+                    api_key=roboflow_api_key
+                )
+                if not image.processed_image:
+                    return Response(
+                        {"error": f"Image {image.id} does not have a processed image."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Get the inference
+                result = inference_client.run_workflow(
+                    workspace_name='oncovision',
+                    workflow_id='detect-and-classify-2',
+                    images={
+                        "image": image.processed_image.path
+                    },
+                    use_cache=True
+                )
+
+                if not result or 'detection_predictions' not in result[0]:
+                    image.state = 'error'
+                    image.save()
+                    return Response(
+                        {"error": f"Failed to get predictions for image {image_name}."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+
+                # Get the predictions
+                predictions = result[0]['detection_predictions']['predictions']
+                for prediction in predictions:
+                    # Get the nodule data
+                    width = prediction['width'] / PROCESSED_IMAGE_WIDTH
+                    height = prediction['height'] / PROCESSED_IMAGE_HEIGHT
+                    x_position = prediction['x'] / PROCESSED_IMAGE_WIDTH
+                    y_position = prediction['y'] / PROCESSED_IMAGE_HEIGHT
+                    malignancy_type = prediction['class']
+                    # Create a new lung nodule record
+                    LungNodule.objects.create(
+                        malignancy_type=malignancy_type,
+                        x_position=x_position,
+                        y_position=y_position,
+                        width=width,
+                        height=height,
+                        medical_imaging=image
+                    )
+
+                # Set to analyzed state
+                image.state = 'analyzed'
+                image.save()
+                
 
         return Response(
             {"message": "Medical images updated successfully."},

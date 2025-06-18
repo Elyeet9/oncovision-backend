@@ -126,3 +126,6 @@ CORS_ALLOW_ALL_ORIGINS = True
 # Setup a media folder in the root directory
 MEDIA_URL = '/media/'
 MEDIA_ROOT = BASE_DIR / 'media/'
+
+PROCESSED_IMAGE_WIDTH = 512
+PROCESSED_IMAGE_HEIGHT = 512
