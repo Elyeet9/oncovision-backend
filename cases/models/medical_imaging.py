@@ -3,6 +3,23 @@ from oncovision.utils.options import IMAGING_STATE_CHOICES
 from django.db import models
 
 
+def full_image_upload_path(instance, filename):
+    """
+    Generate file path for full images, organizing them by clinical case ID.
+    """
+    # Use the clinical case ID if available, otherwise use 'unassigned'
+    case_id = instance.clinical_case.id if instance.clinical_case else 'unassigned'
+    return f"medical_imaging/full_images/{case_id}/{filename}"
+
+def processed_image_upload_path(instance, filename):
+    """
+    Generate file path for processed images, organizing them by clinical case ID.
+    """
+    # Use the clinical case ID if available, otherwise use 'unassigned'
+    case_id = instance.clinical_case.id if instance.clinical_case else 'unassigned'
+    return f"medical_imaging/processed_images/{case_id}/{filename}"
+
+
 class MedicalImaging(BaseModel):
     """
     Model representing an uploaded MedicalImaging.
@@ -17,12 +34,12 @@ class MedicalImaging(BaseModel):
         verbose_name="Estado de la imagen"
     )
     full_image = models.FileField(
-        upload_to="medical_imaging/full_images",
+        upload_to=full_image_upload_path,
         blank=True, null=True,
         verbose_name="Imagen completa"
     )
     processed_image = models.FileField(
-        upload_to="medical_imaging/processed_images",
+        upload_to=processed_image_upload_path,
         blank=True, null=True,
         verbose_name="Imagen procesada"
     )
