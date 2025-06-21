@@ -3,7 +3,6 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.core.files import File
 
-from cupy.cuda import is_available as is_cuda_available
 from inference_sdk import InferenceHTTPClient
 from dotenv import load_dotenv
 import cv2
@@ -12,7 +11,7 @@ import os
 
 from cases.models.medical_imaging import MedicalImaging
 from cases.models.lung_nodule import LungNodule
-from oncovision.utils.image_filters import adaptiveBilateralFilter, cudaAdaptiveBilateralFilter
+from oncovision.utils.image_filters import adaptiveBilateralFilter, cudaAdaptiveBilateralFilter, CUDA_AVAILABLE
 from oncovision.settings import PROCESSED_IMAGE_WIDTH, PROCESSED_IMAGE_HEIGHT
 
 
@@ -58,7 +57,7 @@ class MedicalImagingViewSet(APIView):
                     resized_img = cv2.resize(img, (512, 512))
                     filtered_img = None
                     # Check if cuda is available
-                    if is_cuda_available():
+                    if CUDA_AVAILABLE:
                         # Use cupy to handle the image
                         filtered_img = cudaAdaptiveBilateralFilter(resized_img, window_size=5)
                     else:
