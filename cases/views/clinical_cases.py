@@ -2,6 +2,14 @@ from rest_framework.views import APIView
 from rest_framework.response import Response
 from rest_framework import status
 
+from django.core.files.base import ContentFile
+
+from pydicom import dcmread
+import numpy as np
+import tempfile
+import cv2
+import os
+
 from cases.models.clinical_case import ClinicalCase
 from cases.models.medical_imaging import MedicalImaging
 from cases.models.lung_nodule import LungNodule
@@ -193,14 +201,77 @@ class ClinicalCaseUploadImagesView(APIView):
                     {"error": "No images provided."},
                     status=status.HTTP_400_BAD_REQUEST
                 )
+
             for image in images:
-                # Create a new MedicalImaging instance for each image
-                medical_image = MedicalImaging.objects.create(
-                    clinical_case=clinical_case,
-                    full_image=image,
-                    state='preview'  # Set the initial state to 'uploaded'
-                )
-                medical_image.save()
+                # Check if it's in a correct format
+                if not image.name.lower().endswith(('.png', '.jpg', '.jpeg', '.dcm')):
+                    return Response(
+                        {"error": "Invalid file type. Only PNG, JPG, JPEG, and DICOM files are allowed."},
+                        status=status.HTTP_400_BAD_REQUEST
+                    )
+                
+                # Handling DICOMS
+                if image.name.lower().endswith('.dcm'):
+                    try:
+                        # Create a temporary file to store the uploaded DICOM
+                        with tempfile.NamedTemporaryFile(delete=False) as temp_file:
+                            for chunk in image.chunks():
+                                temp_file.write(chunk)
+                            temp_file_path = temp_file.name
+                        
+                        # Read DICOM file
+                        dicom_data = dcmread(temp_file_path)
+                        
+                        # Convert DICOM to image array
+                        pixel_array = dicom_data.pixel_array
+                        
+                        # Normalize the pixel values
+                        if pixel_array.dtype != np.uint8:
+                            # Scale to 8-bit (0-255)
+                            pixel_min = pixel_array.min()
+                            pixel_max = pixel_array.max()
+                            if pixel_max != pixel_min:  # Avoid division by zero
+                                pixel_array = ((pixel_array - pixel_min) * 255.0 / (pixel_max - pixel_min))
+                            pixel_array = pixel_array.astype(np.uint8)
+
+                        # Encode as PNG
+                        success, encoded_image = cv2.imencode('.png', pixel_array)
+                        if not success:
+                            return Response(
+                                {"error": f"Failed to convert DICOM image {image.name} to PNG format."},
+                                status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                            )
+                        
+                        # Create a PNG file from the encoded image
+                        png_file = ContentFile(encoded_image.tobytes())
+                        
+                        # Create MedicalImaging instance
+                        medical_image = MedicalImaging(
+                            clinical_case=clinical_case,
+                            state='preview'
+                        )
+                        
+                        # Use original filename but change extension to .png
+                        base_filename = os.path.splitext(image.name)[0]
+                        medical_image.full_image.save(f"{base_filename}.png", png_file, save=True)
+                        
+                        # Clean up the temp file
+                        os.unlink(temp_file_path)
+                        
+                    except Exception as e:
+                        return Response(
+                            {"error": f"Error processing DICOM file {image.name}: {str(e)}"},
+                            status=status.HTTP_500_INTERNAL_SERVER_ERROR
+                        )
+                else:
+                    # Handle regular image files (PNG, JPG, JPEG)
+                    medical_image = MedicalImaging.objects.create(
+                        clinical_case=clinical_case,
+                        full_image=image,
+                        state='preview'
+                    )
+                    medical_image.save()
+            
             return Response(
                 {"message": "Images uploaded successfully", "clinical_case_id": clinical_case.id},
                 status=status.HTTP_201_CREATED
@@ -209,4 +280,9 @@ class ClinicalCaseUploadImagesView(APIView):
             return Response(
                 {"error": "Clinical case not found."},
                 status=status.HTTP_404_NOT_FOUND
+            )
+        except Exception as e:
+            return Response(
+                {"error": f"An error occurred while processing the upload: {str(e)}"},
+                status=status.HTTP_500_INTERNAL_SERVER_ERROR
             )
