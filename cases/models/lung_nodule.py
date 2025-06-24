@@ -28,4 +28,4 @@ class LungNodule(BaseModel):
         ordering = ["-created_at", "-updated_at"]
 
     def __str__(self):
-        return f"Nódulo pulmonar {self.id} - Caso: {self.medical_imaging.clinical_case.id}"
+        return f"Nódulo pulmonar {self.id} - Caso: {self.medical_imaging.clinical_case.id if self.medical_imaging.clinical_case else 'N/A'}"
