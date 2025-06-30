@@ -11,6 +11,9 @@ https://docs.djangoproject.com/en/5.1/ref/settings/
 """
 
 from pathlib import Path
+from dotenv import load_dotenv
+import os
+load_dotenv()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -66,7 +69,14 @@ SIMPLE_JWT = {
 CORS_ALLOWED_ORIGINS = [
     "http://localhost:3000",    # Next.js development server
 ]
-# CORS_ALLOW_ALL_ORIGINS = True
+local_ip = os.environ['LOCAL_IP']
+ALLOWED_HOSTS = [
+    local_ip,  # Local IP address for development
+    "127.0.0.1",
+    "localhost",
+    "0.0.0.0",
+]
+CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
 
 
