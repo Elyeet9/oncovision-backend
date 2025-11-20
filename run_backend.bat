@@ -6,7 +6,7 @@ echo.
 
 REM Verificar si existe el entorno virtual
 if not exist venv (
-    echo ERROR: No se encontró el entorno virtual.
+    echo ERROR: No se encontro el entorno virtual.
     echo Por favor, ejecute setup_backend.bat primero.
     pause
     exit /b 1
@@ -14,8 +14,8 @@ if not exist venv (
 
 REM Verificar si existe la base de datos
 if not exist db.sqlite3 (
-    echo ADVERTENCIA: No se encontró la base de datos.
-    echo ¿Desea ejecutar las migraciones ahora? (S/N)
+    echo ADVERTENCIA: No se encontro la base de datos.
+    echo Desea ejecutar las migraciones ahora? (S/N)
     set /p migrate=
     if /i "%migrate%"=="S" (
         echo.
@@ -25,7 +25,7 @@ if not exist db.sqlite3 (
         echo Ejecutando migraciones...
         python manage.py migrate
         echo.
-        echo ¿Desea crear un superusuario? (S/N)
+        echo Desea crear un superusuario? (S/N)
         set /p createuser=
         if /i "%createuser%"=="S" (
             python manage.py createsuperuser
