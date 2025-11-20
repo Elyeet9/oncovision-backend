@@ -4,10 +4,10 @@ echo   OncoVision Backend - Setup
 echo ========================================
 echo.
 
-REM Verificar si Python está instalado
+REM Verificar si Python esta instalado
 python --version >nul 2>&1
 if %errorlevel% neq 0 (
-    echo ERROR: Python no está instalado o no está en PATH
+    echo ERROR: Python no esta instalado o no esta en PATH
     echo Por favor, instale Python 3.10 o superior desde https://www.python.org/downloads/
     pause
     exit /b 1
@@ -19,7 +19,7 @@ echo.
 
 echo [2/5] Creando entorno virtual...
 if exist venv (
-    echo El entorno virtual ya existe. ¿Desea recrearlo? (S/N)
+    echo El entorno virtual ya existe. Desea recrearlo? (S/N)
     set /p recreate=
     if /i "%recreate%"=="S" (
         echo Eliminando entorno virtual existente...
@@ -49,7 +49,7 @@ echo ========================================
 echo   Setup completado exitosamente!
 echo ========================================
 echo.
-echo Próximos pasos:
+echo Proximos pasos:
 echo 1. Configurar archivo .env (si no existe)
 echo 2. Ejecutar migraciones: python manage.py migrate
 echo 3. Crear superusuario: python manage.py createsuperuser
